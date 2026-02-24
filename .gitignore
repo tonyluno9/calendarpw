@@ -1,0 +1,19 @@
+# Laravel
+reservas-api/vendor/
+reservas-api/node_modules/
+reservas-api/storage/*.key
+reservas-api/storage/logs/
+reservas-api/storage/framework/
+reservas-api/.env
+reservas-api/.env.*
+reservas-api/database/database.sqlite
+
+# React/Vite
+reservas-frontend/node_modules/
+reservas-frontend/dist/
+reservas-frontend/.env
+reservas-frontend/.env.*
+
+# OS
+.DS_Store
+Thumbs.db
