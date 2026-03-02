@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { apiFetch } from "../api/client"; // Asegúrate de que la ruta sea correcta
+import { apiFetch } from "../api/client"; 
 
 export default function Navbar() {
   const token = localStorage.getItem("token");
