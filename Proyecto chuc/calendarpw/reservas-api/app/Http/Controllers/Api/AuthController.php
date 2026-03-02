@@ -9,33 +9,41 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    public function login(Request $request)
-    {
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required'],
-        ]);
+   public function login(Request $request)
+{
+    $credentials = $request->only('email', 'password');
 
-        if (!Auth::attempt($credentials)) {
-            throw ValidationException::withMessages([
-                'email' => ['Credenciales incorrectas.'],
-            ]);
-        }
-
-        $user = $request->user();
-
-        $token = $user->createToken('web')->plainTextToken;
-
+    // Intenta autenticar
+    if (!Auth::attempt($credentials)) {
         return response()->json([
-            'token' => $token,
-            'role'  => $user->role ?? 'user',
-            'user'  => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-            ],
-        ]);
+            'message' => 'Credenciales incorrectas'
+        ], 401);
     }
+
+    // Busca al usuario manualmente para asegurar que el modelo está cargado
+    $user = \App\Models\User::where('email', $request->email)->first();
+
+    if (!$user) {
+        return response()->json([
+            'message' => 'Usuario no encontrado después de Auth'
+        ], 500);
+    }
+
+    // Intenta crear el token
+    try {
+        $token = $user->createToken('auth_token')->plainTextToken;
+        
+        return response()->json([
+            'user' => $user,
+            'token' => $token
+        ]);
+    } catch (\Exception $e) {
+        // Si esto falla, el error 500 es por falta de la tabla o configuración de Sanctum
+        return response()->json([
+            'message' => 'Error al crear el token: ' . $e->getMessage()
+        ], 500);
+    }
+}
 
     public function logout(Request $request)
     {

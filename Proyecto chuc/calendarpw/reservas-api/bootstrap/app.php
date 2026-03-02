@@ -11,9 +11,14 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+
+    // 🔥 IMPORTANTE: NO usar statefulApi() si usas Bearer Token
     ->withMiddleware(function (Middleware $middleware) {
         //
     })
+
     ->withExceptions(function (Exceptions $exceptions) {
         //
-    })->create();
+    })
+
+    ->create();

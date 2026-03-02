@@ -9,28 +9,23 @@ use Illuminate\Http\Request;
 class ReservationController extends Controller
 {
     /**
-     * Obtener reservas filtradas por rango de fechas.
+     * Obtener reservas filtradas por rango de fechas para FullCalendar.
      */
     public function index(Request $request)
     {
-        // 1. Capturamos las fechas que manda el frontend (FullCalendar)
         $start = $request->query('start');
         $end = $request->query('end');
 
-        // 2. Iniciamos la consulta cargando las relaciones de usuario y espacio
         $query = Reservation::with(['user', 'space']);
 
-        // 3. Filtramos por rango si las fechas están presentes
         if ($start && $end) {
             $query->whereBetween('start_time', [$start, $end]);
         }
 
-        // 4. Retornamos la respuesta formateada para el calendario
         return response()->json($query->get()->map(function ($r) {
             return [
                 'id' => $r->id,
-                // Concatenamos espacio y usuario para el título del evento
-                'title' => ($r->space->name ?? 'Sala') . " - " . ($r->user->name ?? 'Usuario'),
+                'title' => $r->title ?? (($r->space->name ?? 'Clase') . " - " . ($r->user->name ?? 'Alessandro')),
                 'start' => $r->start_time,
                 'end' => $r->end_time,
                 'space_name' => $r->space->name ?? '',
@@ -40,6 +35,36 @@ class ReservationController extends Controller
     }
 
     /**
-     * Store y otros métodos (si ya los tenías, mantenlos debajo)
+     * EL MOTOR DE GUARDADO: Aquí es donde se registran tus clases de la UAC.
      */
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'space_id'   => 'required|exists:spaces,id',
+            'title'      => 'required|string|max:255',
+            'start_time' => 'required',
+            'end_time'   => 'required',
+        ]);
+
+        // Vinculamos la reserva a tu usuario logueado.
+        $reserva = $request->user()->reservas()->create([
+            'space_id'   => $data['space_id'],
+            'title'      => $data['title'],
+            'start_time' => $data['start_time'],
+            'end_time'   => $data['end_time'],
+        ]);
+
+        return response()->json($reserva, 201);
+    }
+
+    /**
+     * Eliminar compromiso de la agenda.
+     */
+    public function destroy($id)
+    {
+        $reserva = Reservation::findOrFail($id);
+        $reserva->delete();
+
+        return response()->json(['message' => 'Eliminado correctamente']);
+    }
 }
