@@ -15,6 +15,8 @@ Route::post('/register', [AuthController::class, 'register']);
 
 Route::middleware('auth:sanctum')->group(function () {
 
+Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
+Route::post('/logout', [AuthController::class, 'logout']);
 
 Route::post('/reservas/{id}/invite', [InvitationController::class, 'invite']);
 Route::get('/invitations', [InvitationController::class, 'index']);
