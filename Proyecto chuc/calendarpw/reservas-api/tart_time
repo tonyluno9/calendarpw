@@ -1,0 +1,12 @@
+[90m= [39m[34;4mApp\Models\Reservation[39;24m {#6108
+    [34mid[39m: [35m10[39m,
+    [34muser_id[39m: [35m1[39m,
+    [34mspace_id[39m: [35m1[39m,
+    [34mstart_time[39m: "[32m2026-03-03 05:38:00[39m",
+    [34mend_time[39m: "[32m2026-03-03 05:48:00[39m",
+    [34mcreated_at[39m: "[32m2026-03-03 05:36:30[39m",
+    [34mupdated_at[39m: "[32m2026-03-03 05:36:30[39m",
+    [34mtitle[39m: "[32mTEST RECORDATORIO[39m",
+    [34mreminded_at[39m: [36mnull[39m,
+  }
+

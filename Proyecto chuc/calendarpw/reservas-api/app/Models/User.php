@@ -55,6 +55,10 @@ class User extends Authenticatable
         return $this->hasMany(Schedule::class);
     }
 
+    public function notifications()
+{
+    return $this->hasMany(\App\Models\Notification::class);
+}
     /**
      * ESTA ES LA QUE FALTABA:
      * Relación con las reservas de la agenda.
@@ -63,4 +67,8 @@ class User extends Authenticatable
     {
         return $this->hasMany(Reservation::class);
     }
+    public function contacts()
+{
+    return $this->hasMany(\App\Models\Contact::class);
+}
 }
