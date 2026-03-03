@@ -38,12 +38,9 @@ export default function Navbar() {
 
         {/* Solo el Admin ve el acceso a Espacios */}
         {role === "admin" && (
-          <Link 
-            to="/admin/spaces" 
-            className="text-gray-600 hover:text-blue-600 font-medium transition-colors"
-          >
-            Espacios
-          </Link>
+          <Link to="/spaces" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">
+  Espacios
+</Link>
         )}
       </div>
 

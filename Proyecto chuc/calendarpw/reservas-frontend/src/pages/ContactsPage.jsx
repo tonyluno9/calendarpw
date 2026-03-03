@@ -3,7 +3,7 @@ import Layout from "../components/layout";
 import ContactModal from "../components/ContactModal";
 import { apiFetch } from "../api/apiFetch";
 
-const BASE_URL = "http://127.0.0.1:8001/api";
+const BASE_URL = "/api";
 
 export default function ContactsPage() {
   const [contacts, setContacts] = useState([]);

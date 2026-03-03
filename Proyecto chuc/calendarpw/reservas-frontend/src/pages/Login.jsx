@@ -14,16 +14,12 @@ const Login = () => {
     
     try {
       // Conectamos con tu backend de Laravel en el puerto 8001
-      const response = await axios.post('http://127.0.0.1:8001/api/login', {
-        email: email,
-        password: password
-      });
+      const response = await axios.post('/api/login', { email, password });
 
-      // Guardamos el token de Sanctum para que la sesión sea persistente
-      localStorage.setItem('token', response.data.token);
-      
-      // Si el backend nos da el OK, mandamos al usuario a su agenda
-      navigate('/calendar');
+localStorage.setItem('token', response.data.token);
+localStorage.setItem('role', response.data.user?.role || 'user');
+
+navigate('/calendar');
     } catch (error) {
       console.error(error);
       alert("Credenciales incorrectas o error en el servidor");
@@ -71,9 +67,12 @@ const Login = () => {
           </button>
         </form>
 
-        <p className="mt-8 text-center text-xs text-slate-400">
-          ¿No tienes cuenta? <span className="text-indigo-600 font-bold cursor-pointer hover:underline">Regístrate gratis</span>
-        </p>
+        <span
+  className="text-indigo-600 font-bold cursor-pointer hover:underline"
+  onClick={() => navigate("/register")}
+>
+  Regístrate gratis
+</span>
       </div>
     </div>
   );

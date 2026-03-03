@@ -1,31 +1,48 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import Login from './pages/Login'
-import CalendarPage from './pages/CalendarPage'
-import './index.css'
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import CalendarPage from "./pages/CalendarPage";
 import ContactsPage from "./pages/ContactsPage";
+import AdminSpacesPage from "./pages/AdminSpacesPage";
+import SpacesPage from "./pages/SpacesPage";
 
-// Función para checar si el usuario ya entró antes
-const isAuthenticated = () => !!localStorage.getItem('token');
+import "./index.css";
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+const isAuthenticated = () => !!localStorage.getItem("token");
+
+ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <Router>
+    <BrowserRouter>
       <Routes>
         <Route
-        path="/contacts"
-        element={isAuthenticated() ? <ContactsPage /> : <Navigate to="/" />}
+  path="/spaces"
+  element={isAuthenticated() ? <SpacesPage /> : <Navigate to="/" replace />}
 />
-        {/* La primera pantalla que verán todos */}
+        <Route
+  path="/admin/spaces"
+  element={
+    isAuthenticated() && localStorage.getItem("role") === "admin"
+      ? <AdminSpacesPage />
+      : <Navigate to="/calendar" replace />
+  }
+/>
         <Route path="/" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
-        {/* Solo si están logueados pueden ver la agenda */}
-        <Route 
-          path="/calendar" 
-          element={isAuthenticated() ? <CalendarPage /> : <Navigate to="/" />} 
+        <Route
+          path="/calendar"
+          element={isAuthenticated() ? <CalendarPage /> : <Navigate to="/" replace />}
         />
+        <Route
+          path="/contacts"
+          element={isAuthenticated() ? <ContactsPage /> : <Navigate to="/" replace />}
+        />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </Router>
-  </React.StrictMode>,
-)
+    </BrowserRouter>
+  </React.StrictMode>
+);

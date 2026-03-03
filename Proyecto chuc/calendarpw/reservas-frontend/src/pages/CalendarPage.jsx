@@ -16,7 +16,7 @@ export default function CalendarPage() {
   const [notifications, setNotifications] = useState([]);
   const [notifError, setNotifError] = useState("");
 
-  const BASE_URL = "http://127.0.0.1:8001/api";
+  const BASE_URL = "/api";
 
   // Estilos tipo Notion para tus categorías de la UAC y Emprendimiento
   const getEventStyle = (categoryName) => {
@@ -299,6 +299,8 @@ useEffect(() => {
           allDaySlot={false}
           slotMinTime="07:00:00" // Tu horario de la UAC
           slotMaxTime="24:00:00"
+          slotDuration="00:05:00"
+          snapDuration="00:05:00"
           height="auto"
           nowIndicator={true}
           slotLabelFormat={{
