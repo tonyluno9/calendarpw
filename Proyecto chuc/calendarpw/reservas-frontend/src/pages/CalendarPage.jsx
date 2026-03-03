@@ -8,6 +8,11 @@ import Layout from "../components/layout";
 import { apiFetch } from "../api/apiFetch";
 
 export default function CalendarPage() {
+  
+  const [toast, setToast] = useState(null);
+  const [inviteTarget, setInviteTarget] = useState(null);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteError, setInviteError] = useState("");
   const [events, setEvents] = useState([]);
   const [spaces, setSpaces] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -15,7 +20,7 @@ export default function CalendarPage() {
   const [modalError, setModalError] = useState("");
   const [notifications, setNotifications] = useState([]);
   const [notifError, setNotifError] = useState("");
-
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const BASE_URL = "/api";
 
   // Estilos tipo Notion para tus categorías de la UAC y Emprendimiento
@@ -88,6 +93,22 @@ async function markNotificationRead(id) {
   }
 }
 
+function combineDateAndTime(dateObj, timeHHMM) {
+  const [hh, mm] = timeHHMM.split(":").map(Number);
+  const d = new Date(dateObj);
+  d.setHours(hh, mm, 0, 0);
+
+  // Formato "YYYY-MM-DD HH:mm:ss" para Laravel
+  const pad = (n) => String(n).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  const MM = pad(d.getMonth() + 1);
+  const dd = pad(d.getDate());
+  const HH = pad(d.getHours());
+  const mi = pad(d.getMinutes());
+  const ss = pad(d.getSeconds());
+  return `${yyyy}-${MM}-${dd} ${HH}:${mi}:${ss}`;
+}
+
   async function load() {
   const token = localStorage.getItem("token");
   if (!token) return;
@@ -131,38 +152,58 @@ useEffect(() => {
   load();
 }, []);
 
-  function handleSelect(info) {
-    if (!spaces.length) {
-      alert("No hay categorías configuradas en la base de datos.");
-      return;
-    }
-    setSelectedRange(info);
-    setModalError("");
-    setIsModalOpen(true);
+  async function reloadSpaces() {
+  try {
+    const resSp = await apiFetch(`${BASE_URL}/spaces`, { method: "GET" });
+    if (!resSp.ok) throw new Error("Error cargando categorías");
+    const sp = await resSp.json();
+    setSpaces(Array.isArray(sp) ? sp : []);
+    return Array.isArray(sp) ? sp : [];
+  } catch (e) {
+    console.error(e);
+    return [];
+  }
+}
+
+  async function handleSelect(info) {
+  const sp = await reloadSpaces();
+
+  if (!sp.length) {
+    alert("No hay categorías configuradas en la base de datos.");
+    return;
   }
 
-  async function handleConfirmReservation({ space_id, title }) {
+  setSelectedRange(info);
   setModalError("");
-  const token = localStorage.getItem("token");
+  setIsModalOpen(true);
+}
+
+  async function handleConfirmReservation({ space_id, title, start_time, end_time }) {
+  setModalError("");
 
   try {
+    const start = combineDateAndTime(selectedRange.start, start_time);
+    const end = combineDateAndTime(selectedRange.start, end_time);
+
+    // Validación extra por si acaso
+    if (end <= start) {
+      setModalError("La hora de fin debe ser mayor que la de inicio.");
+      return;
+    }
+
     const resp = await apiFetch(`${BASE_URL}/reservas`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         space_id,
         title,
-        start_time: selectedRange.startStr,
-        end_time: selectedRange.endStr,
+        start_time: start,
+        end_time: end,
       }),
     });
 
     if (!resp.ok) {
-      const data = await resp.json();
+      const data = await resp.json().catch(() => ({}));
       throw new Error(data.message || "Error al guardar en la agenda");
     }
 
@@ -173,23 +214,53 @@ useEffect(() => {
   }
 }
 
-  async function handleEventClick(info) {
-    if (!confirm("¿Deseas eliminar este compromiso de tu agenda?")) return;
-    const token = localStorage.getItem('token');
-    try {
-      const resp = await apiFetch(`${BASE_URL}/reservas/${info.event.id}`, { 
-        method: "DELETE",
-        headers: { 
-          "Authorization": `Bearer ${token}`,
-          "Accept": "application/json"
-        }
-      });
-      if (!resp.ok) throw new Error("No se pudo eliminar el evento");
-      await load();
-    } catch (e) {
-      alert(e.message);
-    }
+  function handleEventClick(info) {
+  setDeleteTarget(info.event);  // abre modal borrar
+  // si quieres invitar desde otro botón, lo dejamos separado
+}
+async function sendInvite() {
+  if (!inviteTarget) return;
+
+  try {
+    setInviteError("");
+
+    const res = await apiFetch(`${BASE_URL}/reservas/${inviteTarget.id}/invite`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ invitee_email: inviteEmail.trim() }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.message || "No se pudo enviar invitación");
+
+    setInviteTarget(null);
+setToast("Invitación enviada ✅");
+setTimeout(() => setToast(null), 2500);
+
+  } catch (e) {
+    setInviteError(e.message);
   }
+}
+async function confirmDelete() {
+  if (!deleteTarget) return;
+
+  try {
+    const resp = await apiFetch(`${BASE_URL}/reservas/${deleteTarget.id}`, {
+      method: "DELETE",
+    });
+
+    const data = await resp.json().catch(() => ({}));
+
+    if (!resp.ok) {
+      throw new Error(data.message || "No se pudo eliminar");
+    }
+
+    setDeleteTarget(null);
+    await load();
+  } catch (e) {
+    alert(e.message);
+  }
+}
 
   return (
     <Layout>
@@ -259,7 +330,7 @@ useEffect(() => {
   try {
     const token = localStorage.getItem("token");
     const url = `${BASE_URL}/reservas?start=${encodeURIComponent(fetchInfo.startStr)}&end=${encodeURIComponent(fetchInfo.endStr)}`;
-
+    
     const res = await fetch(url, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -312,6 +383,90 @@ useEffect(() => {
           eventClassNames="rounded-md border-l-4 shadow-sm font-medium"
         />
       </div>
+      {inviteTarget && (
+  <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[2000] backdrop-blur-sm">
+    <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm">
+      <h3 className="text-lg font-bold text-slate-900">Invitar a este evento</h3>
+
+      <p className="text-sm text-slate-500 mt-2">
+        Evento: <span className="font-medium">{inviteTarget.title}</span>
+      </p>
+
+      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mt-4 mb-1">
+        Email del usuario
+      </label>
+      <input
+        value={inviteEmail}
+        onChange={(e) => setInviteEmail(e.target.value)}
+        className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50"
+        placeholder="correo@ejemplo.com"
+      />
+      {toast && (
+  <div className="fixed top-6 right-6 z-[5000] bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-xl animate-fade-in">
+    {toast}
+  </div>
+)}
+
+      {inviteError && (
+        <div className="mt-3 bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-sm">
+          {inviteError}
+        </div>
+      )}
+
+      <div className="flex justify-end gap-3 mt-6">
+        <button
+          onClick={() => setInviteTarget(null)}
+          className="px-4 py-2 bg-slate-100 rounded-lg"
+        >
+          Cancelar
+        </button>
+
+        <button
+          onClick={sendInvite}
+          disabled={!inviteEmail.trim()}
+          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white rounded-lg"
+        >
+          Enviar
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+      {deleteTarget && (
+  <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[2000] backdrop-blur-sm">
+    <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm">
+      <h3 className="text-lg font-bold text-slate-900">¿Eliminar evento?</h3>
+
+      <p className="text-sm text-slate-500 mt-2">Estás a punto de eliminar:</p>
+
+     <div className="mt-3 p-3 bg-slate-50 rounded-lg text-sm font-medium">
+        {deleteTarget.title}
+      </div>
+
+      <div className="flex justify-end gap-3 mt-6">
+        <button
+  onClick={() => {
+    setInviteTarget(deleteTarget);   // abrir invitar con el mismo evento
+    setInviteEmail("");
+    setInviteError("");
+    setDeleteTarget(null);           // 👈 CIERRA el modal anterior
+  }}
+  className="px-4 py-2 bg-indigo-600 text-white rounded-lg"
+>
+  Invitar
+</button>
+
+        <button
+          onClick={confirmDelete}
+          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg"
+        >
+          Eliminar
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
 
       <ReservationModal
         isOpen={isModalOpen}
@@ -320,6 +475,6 @@ useEffect(() => {
         spaces={spaces}
         errorMessage={modalError}
       />
-    </Layout>
+        </Layout>
   );
 }

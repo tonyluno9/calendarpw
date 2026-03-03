@@ -14,11 +14,19 @@ const Login = () => {
     
     try {
       // Conectamos con tu backend de Laravel en el puerto 8001
-      const response = await axios.post('/api/login', { email, password });
+      const response = await axios.post("/api/login", { email, password }, {
+  headers: { Accept: "application/json" },
+});
 
-localStorage.setItem('token', response.data.token);
-localStorage.setItem('role', response.data.user?.role || 'user');
+console.log("LOGIN status:", response.status);
+console.log("LOGIN data:", response.data);
 
+localStorage.setItem("token", response.data.token);
+localStorage.setItem("role", response.data.user?.role || "user");
+
+console.log("TOKEN guardado:", localStorage.getItem("token"));
+
+navigate("/calendar");
 navigate('/calendar');
     } catch (error) {
       console.error(error);

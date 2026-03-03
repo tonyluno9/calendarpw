@@ -8,6 +8,8 @@ import CalendarPage from "./pages/CalendarPage";
 import ContactsPage from "./pages/ContactsPage";
 import AdminSpacesPage from "./pages/AdminSpacesPage";
 import SpacesPage from "./pages/SpacesPage";
+import InvitationsPage from "./pages/InvitationsPage";
+
 
 import "./index.css";
 
@@ -17,6 +19,11 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
       <Routes>
+        
+        <Route
+  path="/invitations"
+  element={isAuthenticated() ? <InvitationsPage /> : <Navigate to="/" replace />}
+/>
         <Route
   path="/spaces"
   element={isAuthenticated() ? <SpacesPage /> : <Navigate to="/" replace />}

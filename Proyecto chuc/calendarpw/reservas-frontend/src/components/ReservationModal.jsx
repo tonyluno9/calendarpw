@@ -3,26 +3,38 @@ import React, { useEffect, useState } from "react";
 const ReservationModal = ({ isOpen, onClose, onConfirm, spaces, errorMessage }) => {
   const [selectedSpace, setSelectedSpace] = useState("");
   const [title, setTitle] = useState("");
+  const [startTime, setStartTime] = useState("09:00");
+  const [endTime, setEndTime] = useState("10:00");
 
   useEffect(() => {
     if (isOpen) {
       setSelectedSpace("");
       setTitle("");
+      setStartTime("09:00");
+      setEndTime("10:00");
     }
   }, [isOpen]);
 
   if (!isOpen) return null;
 
+  const validTimes = startTime && endTime && endTime > startTime;
+
   const handleConfirm = () => {
-    if (!selectedSpace || !title.trim()) return;
-    onConfirm({ space_id: Number(selectedSpace), title: title.trim() });
+    if (!selectedSpace || !title.trim() || !validTimes) return;
+
+    onConfirm({
+      space_id: Number(selectedSpace),
+      title: title.trim(),
+      start_time: startTime,
+      end_time: endTime,
+    });
   };
 
   return (
     <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-[1000] backdrop-blur-sm">
       <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-md flex flex-col gap-4">
         <h2 className="text-2xl font-bold text-gray-800">Nueva Reserva</h2>
-        <p className="text-gray-600">Elige categoría y escribe el título:</p>
+        <p className="text-gray-600">Elige categoría, título y horario:</p>
 
         <div className="flex flex-col gap-2">
           <label className="text-sm font-medium text-gray-700">Título</label>
@@ -52,6 +64,35 @@ const ReservationModal = ({ isOpen, onClose, onConfirm, spaces, errorMessage }) 
           </select>
         </div>
 
+        {/* Horario */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-gray-700">Inicio</label>
+            <input
+              type="time"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              className="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-gray-700">Fin</label>
+            <input
+              type="time"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+              className="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        {!validTimes && (
+          <div className="bg-amber-50 text-amber-800 p-3 rounded-lg text-sm border border-amber-200">
+            La hora de fin debe ser mayor que la de inicio.
+          </div>
+        )}
+
         {errorMessage && (
           <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-200">
             {errorMessage}
@@ -67,7 +108,7 @@ const ReservationModal = ({ isOpen, onClose, onConfirm, spaces, errorMessage }) 
           </button>
           <button
             onClick={handleConfirm}
-            disabled={!selectedSpace || !title.trim()}
+            disabled={!selectedSpace || !title.trim() || !validTimes}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white rounded-lg font-medium shadow-sm"
           >
             Guardar
