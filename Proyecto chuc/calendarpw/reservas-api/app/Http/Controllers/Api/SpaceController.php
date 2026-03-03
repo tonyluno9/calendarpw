@@ -13,7 +13,7 @@ class SpaceController extends Controller
         return Space::orderBy('name')->get();
     }
 
-    // ADMIN: crear space
+    // Crear (ADMIN)
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -28,7 +28,6 @@ class SpaceController extends Controller
         return response()->json($space, 201);
     }
 
-    // ADMIN: actualizar
     public function update(Request $request, $id)
     {
         $space = Space::findOrFail($id);
@@ -41,7 +40,6 @@ class SpaceController extends Controller
             'available_to' => ['sometimes', 'required', 'date_format:H:i'],
         ]);
 
-        // Validación cruzada cuando mandan ambos
         if (isset($data['available_from']) && isset($data['available_to'])) {
             if ($data['available_to'] <= $data['available_from']) {
                 return response()->json([
@@ -54,7 +52,6 @@ class SpaceController extends Controller
         return response()->json($space);
     }
 
-    // ADMIN: borrar
     public function destroy($id)
     {
         $space = Space::findOrFail($id);

@@ -157,27 +157,17 @@ class ReservationController extends Controller
         return response()->json($reserva);
     }
 
-    /**
-     * Eliminar reserva (solo hasta 1 día antes)
-     */
     public function destroy(Request $request, $id)
-    {
-        $user = $request->user();
+{
+    $user = $request->user();
 
-        $reserva = Reservation::where('id', $id)
-            ->where('user_id', $user->id)
-            ->firstOrFail();
+    $reserva = Reservation::where('id', $id)
+        ->where('user_id', $user->id)
+        ->firstOrFail();
 
-        $startTime = Carbon::parse($reserva->start_time);
+    $reserva->delete();
 
-        if (Carbon::now()->greaterThan($startTime->subDay())) {
-            return response()->json([
-                'message' => 'Solo puedes cancelar la reserva hasta 1 día antes.'
-            ], 422);
-        }
-
-        $reserva->delete();
-
-        return response()->json(['message' => 'Reserva eliminada correctamente']);
-    }
+    return response()->json(['message' => 'Reserva eliminada correctamente']);
+}
+    
 }
