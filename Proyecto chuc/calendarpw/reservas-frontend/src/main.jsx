@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './pages/Login'
 import CalendarPage from './pages/CalendarPage'
 import './index.css'
+import ContactsPage from "./pages/ContactsPage";
 
 // Función para checar si el usuario ya entró antes
 const isAuthenticated = () => !!localStorage.getItem('token');
@@ -12,6 +13,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <Router>
       <Routes>
+        <Route
+        path="/contacts"
+        element={isAuthenticated() ? <ContactsPage /> : <Navigate to="/" />}
+/>
         {/* La primera pantalla que verán todos */}
         <Route path="/" element={<Login />} />
 
